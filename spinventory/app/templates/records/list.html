@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Colección{% endblock %}
+
+{% block content %}
+<div class="records-container">
+    <h2>Mi Colección de Discos</h2>
+    <a href="{{ url_for('records.add') }}" class="btn btn-add">+ Añadir Disco</a>
+    
+    <div class="records-grid">
+        {% for record in records %}
+        <div class="record-card">
+            <h3>{{ record.title }}</h3>
+            <p><strong>Artista:</strong> {{ record.artist }}</p>
+            <p><strong>Año:</strong> {{ record.year }}</p>
+            <p><strong>Género:</strong> {{ record.genre }}</p>
+            <p><strong>Estado:</strong> {{ record.condition }}</p>
+        </div>
+        {% else %}
+        <p class="no-records">No tienes discos en tu colección todavía.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

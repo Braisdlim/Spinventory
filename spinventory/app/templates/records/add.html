@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Añadir Disco{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Añadir Nuevo Disco</h2>
+    <form method="POST" action="{{ url_for('records.add') }}">
+        <div class="form-group">
+            <label for="title">Título:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="artist">Artista:</label>
+            <input type="text" id="artist" name="artist" required>
+        </div>
+        <div class="form-group">
+            <label for="year">Año:</label>
+            <input type="number" id="year" name="year" required>
+        </div>
+        <div class="form-group">
+            <label for="genre">Género:</label>
+            <select id="genre" name="genre" required>
+                <option value="rock">Rock</option>
+                <option value="pop">Pop</option>
+                <option value="jazz">Jazz</option>
+                <option value="electronic">Electrónica</option>
+                <option value="classical">Clásica</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="condition">Estado:</label>
+            <select id="condition" name="condition" required>
+                <option value="new">Nuevo</option>
+                <option value="excellent">Excelente</option>
+                <option value="good">Bueno</option>
+                <option value="fair">Regular</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-submit">Guardar Disco</button>
+        <a href="{{ url_for('records.list') }}" class="btn btn-cancel">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
