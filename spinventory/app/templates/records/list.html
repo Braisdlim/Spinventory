@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Mi Colección</h2>
+<a href="{{ url_for('records.add') }}">Añadir Disco</a>
+
+<ul>
+{% for record in records %}
+    <li>
+        <strong>{{ record.title }}</strong> - {{ record.artist }} ({{ record.year }})
+        <br>Género: {{ record.genre }} | Estado: {{ record.condition }}
+    </li>
+{% endfor %}
+</ul>
+{% endblock %}
