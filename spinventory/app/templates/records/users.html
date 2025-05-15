@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="margin-bottom: 1em;">Usuarios</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 2em;">
+    {% for user in users %}
+        <div style="background: rgba(255,255,255,0.07); border-radius: 18px; padding: 1.2em 2em; min-width: 220px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; align-items: center;">
+            <i class="fas fa-user" style="font-size: 2em; color: #6c63ff; margin-right: 1em;"></i>
+            <div>
+                <strong style="font-size: 1.1em;">{{ user.username }}</strong><br>
+                <a href="{{ url_for('records.user_collection', user_email=user.email) }}" class="btn btn-primary btn-sm" style="margin-top: 0.5em;">
+                    <i class="fas fa-compact-disc"></i> Ver colección
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -21,7 +21,7 @@ def login():
             
             if user:
                 login_user(user)
-                return redirect(url_for('records.list'))
+                return redirect(url_for('records.my_collection'))
             flash('Credenciales incorrectas', 'error')
         except Exception as e:
             flash('Error en el login', 'error')
@@ -37,24 +37,19 @@ def register():
             username = request.form.get('username')
             password = request.form.get('password')
             
-            user_exists = False
-            for u in srp.load_all(User):
-                if u.email == email:
-                    user_exists = True
-                    break
+            user_exists = any(u.email == email for u in srp.load_all(User))
             
             if user_exists:
                 flash('Este email ya está registrado', 'error')
             else:
-                user = User(email, username, password)
+                user = User(email=email, username=username, password=password)
                 srp.save(user)
                 login_user(user)
-                flash('¡Registro exitoso!', 'success')
-                return redirect(url_for('records.list'))
+                flash('Registro exitoso. ¡Bienvenido!', 'success')
+                return redirect(url_for('records.my_collection'))
         except Exception as e:
             flash('Error en el registro', 'error')
             current_app.logger.error(f"Register error: {str(e)}")
-    
     return render_template('auth/register.html')
 
 @auth_bp.route('/logout')

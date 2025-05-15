@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}WishList{% endblock %}
+
+{% block content %}
+<div class="wishlist-container">
+    <h2 class="wishlist-title">Mi WishList</h2>
+    <a href="{{ url_for('records.add_wish') }}" class="btn btn-primary" style="margin-bottom: 1.5rem;">+ Añadir a WishList</a>
+    {% if wish_records %}
+        <div class="wishlist-list">
+            {% for wish in wish_records %}
+                <div class="wishlist-card">
+                    {% if wish.portada_filename %}
+                        <img src="{{ url_for('static', filename='uploads/' ~ wish.portada_filename) }}"
+                             alt="Portada de {{ wish.title }}"
+                             class="wishlist-cover"
+                             style="max-width: 120px; max-height: 120px; margin-bottom: 1rem; border-radius: 8px;">
+                    {% endif %}
+                    <div class="wishlist-info">
+                        <span class="wishlist-title">{{ wish.title }}</span>
+                        <div><strong>Artista:</strong> {{ wish.artist }}</div>
+                        <div><strong>Año:</strong> {{ wish.year }}</div>
+                        <div><strong>Género:</strong> {{ wish.genre }}</div>
+                        <div class="wishlist-actions">
+                            <form method="POST" action="{{ url_for('records.delete_wish', wish_id=wish._id) }}" style="margin-top: 0.7rem;">
+                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                            </form>
+                            <form method="GET" action="{{ url_for('records.move_to_collection_form', wish_id=wish._id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-success">Mover a Mi Colección</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="wishlist-empty">Tu WishList está vacía. ¡Añade discos que te gustaría tener!</p>
+    {% endif %}
+</div>
+{% endblock %}
