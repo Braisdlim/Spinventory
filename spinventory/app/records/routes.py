@@ -11,6 +11,7 @@ import redis
 import pickle
 from config import Config
 import requests
+from app.utils import save_unique_image
 
 # Definición del Blueprint
 records_bp = Blueprint('records', __name__)
@@ -36,18 +37,13 @@ def add():
                         flash('Formato de imagen no válido. Use JPG, PNG o GIF.', 'error')
                         return render_template('records/add.html')
                     
-                    # Generar nombre único para el archivo
-                    ext = cover_file.filename.rsplit('.', 1)[1].lower()
-                    unique_filename = f"{uuid.uuid4().hex}.{ext}"
-                    secure_name = secure_filename(unique_filename)
-                    
-                    # Asegurar que el directorio existe
+                    # Lee el archivo en memoria
+                    file_bytes = cover_file.read()
+                    # Asegura que el directorio existe
                     os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
-                    
-                    # Guardar el archivo
-                    cover_path = os.path.join(current_app.config['UPLOAD_FOLDER'], secure_name)
-                    cover_file.save(cover_path)
-                    portada_filename = secure_name
+                    # Guarda la imagen solo si es única
+                    portada_filename = save_unique_image(file_bytes, cover_file.filename, current_app.config['UPLOAD_FOLDER'])
+                    # Si necesitas usar el archivo después, haz: cover_file.seek(0)
 
             # Procesar etiquetas correctamente
             tags_raw = request.form.get('tags', '')
@@ -60,11 +56,7 @@ def add():
                     response = requests.get(cover_url)
                     if response.status_code == 200:
                         ext = cover_url.split('.')[-1].split('?')[0]
-                        filename = secure_filename(f"{uuid.uuid4().hex}_autocover.{ext}")
-                        cover_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                        with open(cover_path, 'wb') as f:
-                            f.write(response.content)
-                        portada_filename = filename
+                        portada_filename = save_unique_image(response.content, f"autocover.{ext}", current_app.config['UPLOAD_FOLDER'])
 
             # Crear el registro del disco
             record = Record(
@@ -145,6 +137,16 @@ def add_wish():
                     with open(cover_path, 'wb') as f:
                         f.write(response.content)
                     portada_filename = filename
+
+        if 'cover' in request.files:
+            cover_file = request.files['cover']
+            if cover_file.filename != '':
+                if not allowed_file(cover_file.filename):
+                    flash('Formato de imagen no válido. Use JPG, PNG o GIF.', 'error')
+                    return render_template('records/add_wish.html')
+                file_bytes = cover_file.read()
+                os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
+                portada_filename = save_unique_image(file_bytes, cover_file.filename, current_app.config['UPLOAD_FOLDER'])
 
         wish = WishRecord(
             title=request.form.get('title').strip(),
