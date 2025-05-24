@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Añadir a WishList{% endblock %}
+
+{% block content %}
+<div class="add-record-container">
+    <div class="add-record-card">
+        <h2 class="add-record-title"><i class="fas fa-star"></i> Añadir Disco a la WishList</h2>
+        <form method="POST" action="{{ url_for('records.add_wish') }}" enctype="multipart/form-data" class="add-record-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="title">Título del disco:</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="artist">Artista/Banda:</label>
+                    <input type="text" id="artist" name="artist" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="year">Año de lanzamiento:</label>
+                    <input type="number" id="year" name="year" min="1900" max="{{ current_year }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="genre">Género:</label>
+                    <select name="genre" id="genre" onchange="toggleOtherGenre(this)" required>
+                        <option value="">Selecciona un género</option>
+                        <option value="Pop">Pop</option>
+                        <option value="Rock">Rock</option>
+                        <option value="Jazz">Jazz</option>
+                        <option value="Blues">Blues</option>
+                        <option value="Soul / R&B">Soul / R&B</option>
+                        <option value="Funk">Funk</option>
+                        <option value="Hip Hop / Rap">Hip Hop / Rap</option>
+                        <option value="Electrónica">Electrónica</option>
+                        <option value="Música clásica">Música clásica</option>
+                        <option value="Metal">Metal</option>
+                        <option value="Punk">Punk</option>
+                        <option value="Reggae">Reggae</option>
+                        <option value="Country / Folk">Country / Folk</option>
+                        <option value="Música latina">Música latina</option>
+                        <option value="Bandas sonoras">Bandas sonoras</option>
+                        <option value="Otro...">Otro...</option>
+                    </select>
+                    <input type="text" name="other_genre" id="other_genre" placeholder="Escribe el género" style="display:none; margin-top:8px;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="cover">Portada del disco (opcional):</label>
+                <input type="file" id="cover" name="cover" accept="image/jpeg, image/png, image/gif">
+                <div class="form-text">
+                    Formatos aceptados: JPG, PNG, GIF. Tamaño máximo: 2MB.
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="button" id="auto-cover-btn" class="btn btn-secondary">Buscar portada automáticamente</button>
+                <div id="auto-cover-preview" style="margin-top:1em;"></div>
+                <input type="hidden" id="auto_cover_url" name="auto_cover_url">
+            </div>
+            <div class="form-actions">
+                <a href="{{ url_for('records.wishlist') }}" class="btn btn-cancel">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar en WishList</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Establecer año actual como máximo
+document.getElementById('year').max = new Date().getFullYear();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('auto-cover-btn');
+    if (btn) {
+        btn.onclick = function() {
+            const artist = document.getElementById('artist').value;
+            const title = document.getElementById('title').value;
+            if (!artist || !title) {
+                alert("Introduce título y artista para buscar la portada.");
+                return;
+            }
+            fetch('/api/cover?artist=' + encodeURIComponent(artist) + '&title=' + encodeURIComponent(title))
+                .then(resp => resp.json())
+                .then(data => {
+                    const preview = document.getElementById('auto-cover-preview');
+                    if (data.cover_url) {
+                        preview.innerHTML = `<img src="${data.cover_url}" alt="Portada encontrada" style="max-width:180px; border-radius:8px; margin-bottom:0.5em;">`;
+                        document.getElementById('auto_cover_url').value = data.cover_url;
+                    } else {
+                        preview.innerHTML = "<span style='color:#e74c3c;'>No se encontró portada.</span>";
+                        document.getElementById('auto_cover_url').value = "";
+                    }
+                });
+        };
+    }
+});
+
+function toggleOtherGenre(select) {
+    const other = document.getElementById('other_genre');
+    other.style.display = (select.value === "Otro...") ? "block" : "none";
+}
+document.addEventListener('DOMContentLoaded', function() {
+    toggleOtherGenre(document.getElementById('genre'));
+});
+</script>
+{% endblock %}

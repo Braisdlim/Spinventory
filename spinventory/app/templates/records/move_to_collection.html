@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Mover a Mi Colección{% endblock %}
+
+{% block content %}
+<div class="add-record-container">
+    <div class="add-record-card">
+        <h2 class="add-record-title">Mover "{{ wish.title }}" a Mi Colección</h2>
+        <form method="POST" class="add-record-form">
+            <div class="form-group">
+                <label for="condition">Selecciona el estado del disco:</label>
+                <select id="condition" name="condition" required>
+                    <option value="" selected disabled>Selecciona el estado...</option>
+                    <option value="new">Nuevo (sellado)</option>
+                    <option value="excellent">Excelente (como nuevo)</option>
+                    <option value="good">Bueno (pequeños signos de uso)</option>
+                    <option value="fair">Regular (desgaste visible)</option>
+                    <option value="poor">Pobre (mucho desgaste)</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <a href="{{ url_for('records.wishlist') }}" class="btn btn-cancel">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Mover a Mi Colección</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

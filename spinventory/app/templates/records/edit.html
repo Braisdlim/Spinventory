@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Editar Disco{% endblock %}
+{% block content %}
+<div class="add-record-container">
+    <div class="add-record-card">
+        <h2 class="add-record-title">Editar Disco</h2>
+        <form method="POST" enctype="multipart/form-data" class="add-record-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="title">Título del disco:</label>
+                    <input type="text" id="title" name="title" value="{{ record.title }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="artist">Artista/Banda:</label>
+                    <input type="text" id="artist" name="artist" value="{{ record.artist }}" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="year">Año de lanzamiento:</label>
+                    <input type="number" id="year" name="year" value="{{ record.year }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="genre">Género:</label>
+                    <select name="genre" id="genre" onchange="toggleOtherGenre(this)" required>
+                        <option value="">Selecciona un género</option>
+                        <option value="Pop">Pop</option>
+                        <option value="Rock">Rock</option>
+                        <option value="Jazz">Jazz</option>
+                        <option value="Blues">Blues</option>
+                        <option value="Soul / R&B">Soul / R&B</option>
+                        <option value="Funk">Funk</option>
+                        <option value="Hip Hop / Rap">Hip Hop / Rap</option>
+                        <option value="Electrónica">Electrónica</option>
+                        <option value="Música clásica">Música clásica</option>
+                        <option value="Metal">Metal</option>
+                        <option value="Punk">Punk</option>
+                        <option value="Reggae">Reggae</option>
+                        <option value="Country / Folk">Country / Folk</option>
+                        <option value="Música latina">Música latina</option>
+                        <option value="Bandas sonoras">Bandas sonoras</option>
+                        <option value="Otro...">Otro...</option>
+                    </select>
+                    <input type="text" name="other_genre" id="other_genre" placeholder="Escribe el género" style="display:none; margin-top:8px;">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                    <label for="condition">Estado del disco:</label>
+                    <select id="condition" name="condition" required>
+                        <option value="new" {% if record.condition == 'new' %}selected{% endif %}>Nuevo (sellado)</option>
+                        <option value="excellent" {% if record.condition == 'excellent' %}selected{% endif %}>Excelente</option>
+                        <option value="good" {% if record.condition == 'good' %}selected{% endif %}>Bueno</option>
+                        <option value="fair" {% if record.condition == 'fair' %}selected{% endif %}>Regular</option>
+                        <option value="poor" {% if record.condition == 'poor' %}selected{% endif %}>Pobre</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label for="cover">Portada del disco (opcional):</label>
+                    <input type="file" id="cover" name="cover" accept="image/jpeg, image/png, image/gif">
+                    {% if record.portada_filename %}
+                        <div style="margin-top:0.5rem;">
+                            <img src="{{ url_for('static', filename='uploads/' ~ record.portada_filename) }}" alt="Portada actual" style="max-width:80px; border-radius:6px;">
+                            <span style="font-size:0.9em; color:#aaa;">(Portada actual)</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="tags">Etiquetas (separadas por comas):</label>
+                <input type="text" id="tags" name="tags" value="{{ tags_str }}">
+            </div>
+            <div class="form-actions">
+                <a href="{{ url_for('records.my_collection') }}" class="btn btn-cancel">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function toggleOtherGenre(selectElement) {
+    var input = document.getElementById('other_genre');
+    var selectedValue = selectElement.value;
+    var validGenres = ['Pop', 'Rock', 'Jazz', 'Blues', 'Soul / R&B', 'Funk', 'Hip Hop / Rap', 'Electrónica', 'Música clásica', 'Metal', 'Punk', 'Reggae', 'Country / Folk', 'Música latina', 'Bandas sonoras'];
+
+    if (selectedValue === 'Otro...') {
+        input.style.display = 'block';
+        input.required = true;
+    } else {
+        input.style.display = 'none';
+        input.required = false;
+        input.value = ''; // Clear the input if a valid genre is selected
+    }
+}
+
+// Initialize the genre selection on page load
+window.onload = function() {
+    var genreSelect = document.getElementById('genre');
+    toggleOtherGenre(genreSelect);
+    genreSelect.addEventListener('change', function() {
+        toggleOtherGenre(this);
+    });
+};
+</script>
+{% endblock %}

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinventory - Tu colección musical</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/miniatura.png') }}">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f7fa;
+        }
+        .hero {
+            position: relative;
+            color: #fff;
+            text-align: center;
+            padding: 5em 1em 3em 1em;
+            background: url("{{ url_for('static', filename='img/vinyl_hero.jpg') }}") center/cover no-repeat;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, #00CFFFcc 60%, #181818cc 100%);
+            z-index: 2;
+        }
+        .hero > * {
+            position: relative;
+            z-index: 3;
+        }
+        .hero-logo {
+            height: 110px;
+            margin-bottom: 1em;
+        }
+        .hero-title {
+            font-size: 2.8em;
+            font-weight: bold;
+            margin-bottom: 0.3em;
+            letter-spacing: 2px;
+        }
+        .hero-slogan {
+            font-size: 1.5em;
+            margin-bottom: 1.5em;
+            font-weight: 400;
+        }
+        .hero-btn {
+            background: #fff;
+            color: #00CFFF;
+            border: none;
+            border-radius: 2em;
+            padding: 0.8em 2.5em;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 16px #00cfff33;
+            transition: background 0.2s, color 0.2s;
+        }
+        .hero-btn:hover {
+            background: #00CFFF;
+            color: #fff;
+        }
+        .main-content-bg {
+            background: url("{{ url_for('static', filename='img/vinyl_scroll.jpg') }}") center/cover no-repeat;
+            background-attachment: fixed; /* Efecto parallax opcional */
+            padding: 2em 0;
+            border-radius: 1.2em;
+            box-shadow: 0 2px 24px #00cfff18;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2em;
+            margin: 0;
+            padding: 2em 1em;
+        }
+        .feature-block {
+            background: rgba(255,255,255,0.92);
+            border-radius: 1.2em;
+            box-shadow: 0 2px 12px #00cfff18;
+            padding: 2em 1.5em;
+            max-width: 270px;
+            text-align: center;
+            flex: 1 1 220px;
+        }
+        .feature-block i {
+            font-size: 2.2em;
+            color: #00CFFF;
+            margin-bottom: 0.5em;
+        }
+        .feature-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 0.5em;
+            color: #00CFFF;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px #00cfff22;
+        }
+        .feature-desc {
+            font-size: 1em;
+            color: #ec1717;
+        }
+        .footer {
+            text-align: center;
+            color: #888;
+            font-size: 0.95em;
+            padding: 2em 0 1em 0;
+            margin-top: 2em;
+        }
+        .scroll-image-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 3em 0 2em 0;
+        }
+        .scroll-image {
+            max-width: 90vw;
+            max-height: 400px;
+            width: auto;
+            height: auto;
+            border-radius: 1.2em;
+            box-shadow: 0 4px 24px #00cfff33;
+            object-fit: cover;
+        }
+        @media (max-width: 600px) {
+            .scroll-image {
+                max-height: 220px;
+            }
+        }
+        @media (max-width: 900px) {
+            .features { flex-direction: column; gap: 1.5em; }
+        }
+        
+    </style>
+</head>
+<body>
+    {% extends "base.html" %}
+    {% block nav %}{% endblock %} {# Oculta el menú principal #}
+    {% block content %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <div class="landing-container">
+        <header class="landing-header">
+            <div class="logo-spin-rect">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Spinventory Logo" class="logo-img-rect">
+            </div>
+            <p class="subtitle">¡Gestiona tu colección de vinilos con ritmo y estilo!</p>
+            <div class="slogan">Tu música, tu historia, tu inventario.</div>
+        </header>
+        <nav class="landing-nav">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('records.user_collection', user_email=current_user.email) }}" class="btn btn-main"><i class="fas fa-play"></i> ¡Úsalo ya!</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-secondary"><i class="fas fa-user-plus"></i> Registrarse</a>
+            {% endif %}
+        </nav>
+        <div class="divider"></div>
+        <section class="landing-features">
+            <div class="feature">
+                <i class="fas fa-folder-open fa-2x feature-icon"></i>
+                <h2>Organiza</h2>
+                <p>Clasifica tus discos, artistas y géneros de forma intuitiva.</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-search fa-2x feature-icon"></i>
+                <h2>Descubre</h2>
+                <p>Explora tu colección y encuentra fácilmente cualquier vinilo.</p>
+            </div>
+            <div class="feature">
+                <i class="fas fa-share-alt fa-2x feature-icon"></i>
+                <h2>Comparte</h2>
+                <p>Comparte tu pasión y conecta con otros coleccionistas.</p>
+            </div>
+        </section>
+        <footer class="landing-footer">
+            &copy; {{ now().year }} Spinventory
+        </footer>
+    </div>
+    {% endblock %}
+</body>
+</html>
