@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Detalle Disco{% endblock %}
+{% block content %}
+<div class="record-detail-section">
+    <h2>{{ record.title }} - {{ record.artist }}</h2>
+    <p><strong>Año:</strong> {{ record.year }} | <strong>Género:</strong> {{ record.genre.name }}</p>
+    {% if record.portada_filename %}
+        <img src="{{ url_for('static', filename='uploads/' ~ record.portada_filename) }}" style="max-width:180px;">
+    {% endif %}
+    <p><strong>Estado:</strong> {{ record.condition }}</p>
+
+    {% if avg_stars %}
+        <p><strong>Valoración media:</strong> 
+            <span style="color:#FFD700;">
+                {% set full_stars = avg_stars|int %}
+                {% set half_star = 1 if avg_stars - full_stars >= 0.25 and avg_stars - full_stars < 0.75 else 0 %}
+                {% set empty_stars = 5 - full_stars - half_star %}
+                {% for _ in range(full_stars) %}
+                    <i class="fas fa-star"></i>
+                {% endfor %}
+                {% if half_star %}
+                    <i class="fas fa-star-half-alt"></i>
+                {% endif %}
+                {% for _ in range(empty_stars) %}
+                    <i class="far fa-star"></i>
+                {% endfor %}
+            </span>
+            ({{ avg_stars }}/5)
+        </p>
+    {% else %}
+        <p><em>Sin valoraciones aún.</em></p>
+    {% endif %}
+
+    <div class="reviews-section">
+        <h3>Deja tu review</h3>
+        <!-- Formulario de reseña -->
+        <form method="post" id="review-form">
+            <label for="comment">Comentario:</label>
+            <textarea name="comment" id="comment" required></textarea>
+            <label>Puntuación:</label>
+            <div class="star-rating">
+                {% for i in range(5, 0, -1) %}
+                <input type="radio" id="star{{ i }}" name="stars" value="{{ i }}" required>
+                <label for="star{{ i }}" title="{{ i }} estrellas">&#9733;</label>
+                {% endfor %}
+            </div>
+            <button type="submit">Enviar reseña</button>
+        </form>
+
+        <h3>Reviews</h3>
+        {% for rv in reviews %}
+            <div>
+                <strong>
+                  {{ users_by_email[rv.user_email].username if rv.user_email in users_by_email else rv.user_email }}
+                </strong>
+                <span style="color:#FFD700;">
+                    {% for i in range(rv.stars) %}★{% endfor %}
+                    {% for i in range(5 - rv.stars) %}<span style="color:#ccc;">★</span>{% endfor %}
+                </span>
+                <br>
+                <em>{{ rv.comment }}</em>
+                {% if rv.user_email == current_user.email %}
+                    <form method="post" action="{{ url_for('records.delete_review', review_id=rv._id) }}" style="display:inline;">
+                        <button type="submit" onclick="return confirm('¿Seguro que quieres borrar esta reseña?');" class="btn btn-danger btn-xs">Eliminar</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% else %}
+            <p>No hay reviews aún.</p>
+        {% endfor %}
+    </div>
+
+    <p><strong>Género:</strong> {{ record.genre.name }}</p>
+    {% if record.genre.description %}
+        <p><strong>Descripción:</strong> {{ record.genre.description }}</p>
+    {% endif %}
+</div>
+{% endblock %}

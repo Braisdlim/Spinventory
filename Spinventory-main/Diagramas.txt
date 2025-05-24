@@ -1,0 +1,6 @@
+DiagramaClases
+https://www.mermaidchart.com/raw/95e16753-a7a6-4547-b622-28b3608a017e?theme=light&version=v0.1&format=svg
+Secuencial Eliminar Disco
+https://www.mermaidchart.com/raw/b5555b5f-f090-420f-a55b-92e0abc22cac?theme=light&version=v0.1&format=svg
+Secuencial Añadir Disco Wishlist
+https://www.mermaidchart.com/raw/b46ad6a6-da52-4f82-8a28-db00eebee26e?theme=light&version=v0.1&format=svg
