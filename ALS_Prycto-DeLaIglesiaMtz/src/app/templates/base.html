@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinventory - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/miniatura.png') }}">
+</head>
+<body class="noise-bg">
+    {% block nav %}
+    <nav class="navbar">
+        <div class="navbar-logo">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Spinventory Logo">
+        </div>
+        <div class="navbar-sections">
+            <a href="{{ url_for('records.index') }}" class="navbar-section{% if request.endpoint == 'records.index' %} active{% endif %}">
+                <i class="fas fa-home"></i> Inicio
+            </a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('records.user_collection', user_email=current_user.email) }}" class="navbar-section{% if request.endpoint == 'records.user_collection' %} active{% endif %}">
+                    <i class="fas fa-record-vinyl"></i> Mi colección
+                </a>
+                <a href="{{ url_for('records.wishlist') }}" class="navbar-section{% if request.endpoint == 'records.wishlist' %} active{% endif %}">
+                    <i class="fas fa-star"></i> WishList
+                </a>
+                <a href="{{ url_for('records.users') }}" class="navbar-section{% if request.endpoint == 'records.users' %} active{% endif %}">
+                    <i class="fas fa-users"></i> Usuarios
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="navbar-section">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="navbar-section">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="navbar-section">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </a>
+            {% endif %}
+        </div>
+        {% if current_user.is_authenticated %}
+        <div class="navbar-user">
+            <i class="fas fa-user-circle"></i> {{ current_user.username }}
+        </div>
+        {% endif %}
+    </nav>
+    {% endblock %}
+    <main>
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flashes">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+            {% block scripts %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html>
