@@ -8,11 +8,15 @@ import pickle
 from werkzeug.utils import secure_filename
 import json
 
-# Inicialización de extensiones
+# Inicialización de extensiones globales
 login_manager = LoginManager()
 srp = None  # Se inicializará después con la app
 
 def create_app():
+    """
+    Crea e inicializa la aplicación Flask, configurando extensiones,
+    blueprints, subida de archivos y conexión a Redis.
+    """
     app = Flask(__name__)
     app.config.from_object(Config)
     
@@ -32,7 +36,7 @@ def create_app():
         decode_responses=False  # Importante para Sirope
     )
     
-    # Inicialización de Sirope
+    # Inicialización de Sirope (ORM sobre Redis)
     global srp
     srp = Sirope(redis_obj=redis_conn)
     
@@ -40,30 +44,37 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
 
-    # Registrar blueprints
+    # Registrar blueprints de autenticación y gestión de discos
     from app.auth import auth_bp
     from app.records import records_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(records_bp)  # Sin url_prefix
 
-
-    # User loader (import aquí para evitar imports circulares)
+    # User loader para Flask-Login (evita imports circulares)
     from app.records.models import User
     
     @login_manager.user_loader
     def load_user(user_id):
+        """Carga un usuario por su email desde la base de datos."""
         return srp.find_first(User, lambda u: u.email == user_id)
 
     return app
 
-
-# Función de utilidad para verificar extensiones de archivo
+# Función de utilidad para verificar extensiones de archivo permitidas
 def allowed_file(filename):
+    """
+    Comprueba si el archivo tiene una extensión permitida para imágenes.
+    """
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
 def delete_record_by_id(record_id):
+    """
+    Elimina un disco (Record) de la base de datos Redis por su ID.
+    Intenta deserializar con pickle y, si falla, con JSON.
+    Devuelve True si se elimina correctamente, False si no se encuentra.
+    """
     import redis
     import pickle
     from config import Config
@@ -106,6 +117,11 @@ def delete_record_by_id(record_id):
     return False
 
 def delete_wish_by_id(wish_id):
+    """
+    Elimina un deseo (WishRecord) de la base de datos Redis por su ID.
+    Intenta deserializar con pickle y, si falla, con JSON.
+    Devuelve True si se elimina correctamente, False si no se encuentra.
+    """
     import redis
     import pickle
     import json
@@ -117,7 +133,7 @@ def delete_wish_by_id(wish_id):
         db=Config.REDIS_DB,
         decode_responses=False
     )
-    hash_name = "app.records.models.WishRecord"  # ¡Este es el hash correcto!
+    hash_name = "app.records.models.WishRecord"  # Hash correcto para deseos
     print(f"Buscando en hash: {hash_name}")
     for key in r.hkeys(hash_name):
         raw = r.hget(hash_name, key)
@@ -145,6 +161,11 @@ def delete_wish_by_id(wish_id):
     return False
 
 def delete_review_by_id(review_id):
+    """
+    Elimina una reseña (Review) de la base de datos Redis por su ID.
+    Intenta deserializar con pickle y, si falla, con JSON.
+    Devuelve True si se elimina correctamente, False si no se encuentra.
+    """
     import redis
     import pickle
     import json

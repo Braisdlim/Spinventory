@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, abort
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from app.records.models import Record, WishRecord, Review, Genre  # Asegúrate de importar Review
+from app.records.models import Record, WishRecord, Review, Genre  # Modelos principales
 from app.records.models import User
 from app.utils import (
     save_record, load_all_records, delete_record_by_id,
@@ -15,19 +15,23 @@ from datetime import datetime
 import requests
 from config import Config
 from app.utils import save_unique_image
-from app import srp  # Import srp for storage/repository provider
+from app import srp  # Proveedor de almacenamiento/repositorio
 
-# Definición del Blueprint
+# Definición del Blueprint para agrupar las rutas relacionadas con discos y usuarios
 records_bp = Blueprint('records', __name__)
-
 
 @records_bp.route('/')
 def index():
+    """Página principal de la aplicación."""
     return render_template('index.html', now=datetime.now)
 
 @records_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
+    """
+    Añade un nuevo disco a la colección del usuario actual.
+    Procesa el formulario, guarda la portada y los datos del disco.
+    """
     if request.method == 'POST':
         try:
             # Validación básica de campos requeridos
@@ -42,7 +46,7 @@ def add():
                 genre_name = request.form.get('other_genre', '').strip()
             genre = Genre(name=genre_name)
             
-            # Procesar la imagen de portada
+            # Procesar la imagen de portada subida por el usuario
             portada_filename = None
             if 'cover' in request.files:
                 cover_file = request.files['cover']
@@ -55,7 +59,7 @@ def add():
                     os.makedirs(current_app.config['UPLOAD_FOLDER'], exist_ok=True)
                     portada_filename = save_unique_image(file_bytes, cover_file.filename, current_app.config['UPLOAD_FOLDER'])
 
-            # Procesar etiquetas correctamente
+            # Procesar etiquetas separadas por comas
             tags_raw = request.form.get('tags', '')
             tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
 
@@ -81,6 +85,7 @@ def add():
                 tags=tags
             )
             
+            # Asegura que el género es un objeto Genre
             if not isinstance(record.genre, Genre):
                 record.genre = Genre(name=record.genre)
             save_record(record)
@@ -100,6 +105,10 @@ def add():
 @records_bp.route('/delete/<record_id>', methods=['POST'])
 @login_required
 def delete(record_id):
+    """
+    Elimina un disco de la colección del usuario actual.
+    También elimina la portada si no está compartida.
+    """
     try:
         records = load_all_records(current_user.email)
         for record_obj in records:
@@ -124,12 +133,17 @@ def delete(record_id):
 @records_bp.route('/wishlist', methods=['GET'])
 @login_required
 def wishlist():
+    """Muestra la lista de deseos (WishList) del usuario actual."""
     wish_records = load_all_wishes(current_user.email)
     return render_template('records/wishlist.html', wish_records=wish_records)
 
 @records_bp.route('/wishlist/add', methods=['GET', 'POST'])
 @login_required
 def add_wish():
+    """
+    Añade un disco a la WishList del usuario actual.
+    Permite subir portada o usar una URL automática.
+    """
     if request.method == 'POST':
         portada_filename = None
 
@@ -155,6 +169,7 @@ def add_wish():
             genre_name = request.form.get('other_genre', '').strip()
         genre = Genre(name=genre_name)
 
+        # Crear el objeto WishRecord
         wish = WishRecord(
             title=request.form.get('title').strip(),
             artist=request.form.get('artist').strip(),
@@ -163,6 +178,7 @@ def add_wish():
             user_email=current_user.email,
             portada_filename=portada_filename
         )
+        # Asegura que el género es un objeto Genre
         if not isinstance(wish.genre, Genre):
             wish.genre = Genre(name=wish.genre)
         save_wish(wish)
@@ -173,6 +189,10 @@ def add_wish():
 @records_bp.route('/wishlist/delete/<wish_id>', methods=['POST'])
 @login_required
 def delete_wish(wish_id):
+    """
+    Elimina un disco de la WishList del usuario actual.
+    También elimina la portada si existe.
+    """
     wishes = load_all_wishes(current_user.email)
     wish = next((w for w in wishes if w._id == wish_id), None)
     if wish:
@@ -196,6 +216,10 @@ def delete_wish(wish_id):
 @records_bp.route('/wishlist/move/<wish_id>', methods=['GET', 'POST'])
 @login_required
 def move_to_collection_form(wish_id):
+    """
+    Mueve un disco de la WishList a la colección del usuario.
+    Elimina el deseo y lo añade como disco real.
+    """
     from app.utils import delete_wish_by_id
     wishes = load_all_wishes(current_user.email)
     wish = next((w for w in wishes if w._id == wish_id), None)
@@ -217,7 +241,7 @@ def move_to_collection_form(wish_id):
         if not isinstance(record.genre, Genre):
             record.genre = Genre(name=record.genre)
         save_record(record)
-        delete_wish_by_id(wish._id)  # <--- Elimina de la wishlist automáticamente
+        delete_wish_by_id(wish._id)  # Elimina de la wishlist automáticamente
         flash('Disco movido a tu colección.', 'success')
         return redirect(url_for('records.my_collection'))
 
@@ -226,6 +250,10 @@ def move_to_collection_form(wish_id):
 @records_bp.route('/edit/<record_id>', methods=['GET', 'POST'])
 @login_required
 def edit(record_id):
+    """
+    Edita los datos de un disco de la colección del usuario actual.
+    Permite cambiar título, artista, año, género, estado, etiquetas y portada.
+    """
     # Busca el disco del usuario actual
     record = next((r for r in load_all_records() if getattr(r, '_id', None) == record_id), None)
     if not record:
@@ -279,6 +307,10 @@ def edit(record_id):
 @records_bp.route('/api/cover', methods=['GET'])
 @login_required
 def get_album_cover():
+    """
+    API para obtener la portada de un álbum usando Last.fm.
+    Devuelve la URL de la imagen si está disponible.
+    """
     artist = request.args.get('artist')
     album = request.args.get('title')
     if not artist or not album:
@@ -321,6 +353,10 @@ def get_album_cover():
 @records_bp.route('/record/<record_id>', methods=['GET', 'POST'])
 @login_required
 def record_detail(record_id):
+    """
+    Muestra el detalle de un disco, incluyendo las reviews.
+    Permite añadir una review si el usuario no la ha hecho aún.
+    """
     record = next((r for r in load_all_records() if getattr(r, '_id', None) == record_id), None)
     if not record:
         flash('Disco no encontrado.', 'error')
@@ -374,6 +410,9 @@ def record_detail(record_id):
 @records_bp.route('/review/<review_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_review(review_id):
+    """
+    Permite al usuario editar una review que haya escrito.
+    """
     review = next((rv for rv in load_all_reviews() if rv._id == review_id), None)
     if not review or review.user_email != current_user.email:
         abort(403)
@@ -388,6 +427,9 @@ def edit_review(review_id):
 @records_bp.route('/review/<review_id>/delete', methods=['POST'])
 @login_required
 def delete_review(review_id):
+    """
+    Permite al usuario eliminar una review que haya escrito.
+    """
     review = next((rv for rv in load_all_reviews() if rv._id == review_id and rv.user_email == current_user.email), None)
     if review:
         delete_review_by_id(review_id)
@@ -398,12 +440,18 @@ def delete_review(review_id):
 @records_bp.route('/users')
 @login_required
 def users():
+    """
+    Muestra la lista de otros usuarios registrados en la aplicación.
+    """
     users = [u for u in srp.load_all(User) if u.email != current_user.email]
     return render_template('records/users.html', users=users)
 
 @records_bp.route('/user/<user_email>')
 @login_required
 def user_collection(user_email):
+    """
+    Muestra la colección de discos de otro usuario.
+    """
     records = load_all_records(user_email)
     is_own_collection = (user_email == current_user.email)
     # Busca el usuario por email
@@ -420,9 +468,15 @@ def user_collection(user_email):
 @records_bp.route('/mycollection')
 @login_required
 def my_collection():
+    """
+    Muestra la colección de discos del usuario actual.
+    """
     records = load_all_records(current_user.email)
     return render_template('records/list.html', records=records, is_own_collection=True, user_email=current_user.email)
 
 def allowed_file(filename):
+    """
+    Comprueba si el archivo tiene una extensión permitida para imágenes.
+    """
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']

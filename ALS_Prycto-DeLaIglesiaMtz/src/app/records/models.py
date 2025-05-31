@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 import os
 
 class User(UserMixin):
+    """Representa un usuario registrado en la aplicación."""
     def __init__(self, email, username, password, id=None):
         self._id = id or email  # Usamos email como ID por defecto
         self.email = email
@@ -18,14 +19,14 @@ class User(UserMixin):
         self.created_at = datetime.now().isoformat()
     
     def get_id(self):
+        """Devuelve el identificador único del usuario (email)."""
         return self.email
 
-
-
-class Record:  
+class Record:
+    """Representa un disco (vinilo) en la colección de un usuario."""
     def __init__(self, title, artist, genre, year=None, condition=None, user_email=None, portada_filename=None, tags=None, created_at=None, _id=None):
         import uuid
-        self._id = _id or str(uuid.uuid4())  # <-- Así siempre tiene valor único
+        self._id = _id or str(uuid.uuid4())  # Genera un ID único si no se proporciona
         self.title = title
         self.artist = artist
         self.genre = genre  # Objeto Genre
@@ -35,19 +36,23 @@ class Record:
         self.portada_filename = portada_filename
         self.tags = tags or []
         self.created_at = created_at
-        self._force_pickle = uuid.uuid4()  # <-- Añade esta línea
+        self._force_pickle = uuid.uuid4()  # Fuerza a Sirope a usar pickle
 
     @property
     def id(self):
+        """Devuelve el identificador único del disco."""
         return self._id
 
     def __eq__(self, other):
+        """Compara dos discos por su ID."""
         return self._id == other._id
 
     def __hash__(self):
+        """Permite usar discos como claves en diccionarios y sets."""
         return hash(self._id)
 
-class WishRecord(object):  # <--- Hereda explícitamente de object
+class WishRecord(object):
+    """Representa un disco que el usuario desea (lista de deseos)."""
     __sirope_hash__ = "WishRecord_alsdebug_20250524b"
     def __init__(self, title, artist, year, genre, user_email, portada_filename=None, id=None, created_at=None):
         import uuid
@@ -60,8 +65,10 @@ class WishRecord(object):  # <--- Hereda explícitamente de object
         self.user_email = user_email
         self.portada_filename = portada_filename
         self.created_at = created_at or datetime.now().isoformat()
-        self._force_pickle = uuid.uuid4()  # <--- Esto fuerza a Sirope a usar pickle
+        self._force_pickle = uuid.uuid4()  # Fuerza a Sirope a usar pickle
+
 class Review:
+    """Representa una reseña hecha por un usuario sobre un disco."""
     def __init__(self, record_id, user_email, comment, stars, title, artist, created_at=None, _id=None):
         self._id = _id or str(uuid.uuid4())
         self.record_id = record_id
@@ -73,6 +80,10 @@ class Review:
         self.created_at = created_at or datetime.utcnow().isoformat()
 
 def delete_record_by_id(record_id):
+    """
+    Elimina un disco de la base de datos Redis por su ID.
+    Devuelve True si se elimina correctamente, False si no se encuentra.
+    """
     r = redis.Redis(
         host=Config.REDIS_HOST,
         port=Config.REDIS_PORT,
@@ -101,6 +112,11 @@ def delete_record_by_id(record_id):
     return False
 
 def handle_portada_filename(portada_filename, request):
+    """
+    Gestiona la portada del disco:
+    - Si no hay portada y se proporciona una URL automática, descarga la imagen y la guarda.
+    - Devuelve el nombre de archivo de la portada.
+    """
     if not portada_filename and request.form.get('auto_cover_url'):
         cover_url = request.form.get('auto_cover_url')
         if cover_url:
@@ -115,6 +131,10 @@ def handle_portada_filename(portada_filename, request):
     return portada_filename
 
 def delete_review_by_id(review_id):
+    """
+    Elimina una reseña de la base de datos Redis por su ID.
+    Devuelve True si se elimina correctamente, False si no se encuentra.
+    """
     import redis
     import pickle
     import json
@@ -149,18 +169,25 @@ def delete_review_by_id(review_id):
     return False
 
 class Genre:
+    """Representa un género musical."""
     def __init__(self, name, description=""):
         self.name = name
         self.description = description
 
     def __getstate__(self):
+        """Devuelve el estado serializable del objeto Genre."""
         return {"name": self.name, "description": self.description}
 
     def __setstate__(self, state):
+        """Restaura el estado del objeto Genre desde un diccionario."""
         self.name = state.get("name", "")
         self.description = state.get("description", "")
 
 def create_genre_from_request(request):
+    """
+    Crea un objeto Genre a partir de los datos del formulario recibido en la petición.
+    Si el usuario selecciona "Otro...", toma el valor del campo personalizado.
+    """
     genre_name = request.form.get('genre')
     if genre_name == "Otro...":
         genre_name = request.form.get('other_genre', '').strip()
